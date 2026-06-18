@@ -13,4 +13,18 @@ h2 {
 #map {
   height: 90vh;
   width: 100%;
+
+  .legend {
+  background: white;
+  padding: 10px;
+  line-height: 18px;
+  color: #333;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.legend i {
+  margin-right: 6px;
+}
 }
