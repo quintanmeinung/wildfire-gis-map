@@ -1,0 +1,29 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Sample Fire A",
+        "date": "2026-06-10",
+        "intensity": "High"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-123.42, 40.44]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Sample Fire B",
+        "date": "2026-06-12",
+        "intensity": "Medium"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-123.83, 40.71]
+      }
+    }
+  ]
+}
