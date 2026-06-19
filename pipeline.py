@@ -1,34 +1,23 @@
+from dotenv import load_dotenv
 import json
+import os
+import requests
 
-# ----------------------------
-# MOCK RAW SATELLITE DATA
-# (simulates NASA FIRMS fields)
-# ----------------------------
-def get_mock_raw_data():
-    return [
-        {
-            "lat": 44.0582,   # Bend / Central Oregon
-            "lon": -121.3153,
-            "brightness": 360,
-            "acq_date": "2026-06-17"
-        },
-        {
-            "lat": 44.7749,   # Eastern Oregon (John Day area)
-            "lon": -118.1869,
-            "brightness": 310,
-            "acq_date": "2026-06-16"
-        },
-        {
-            "lat": 43.8041,   # Southern Oregon (Cottage Grove area)
-            "lon": -123.0290,
-            "brightness": 1000,
-            "acq_date": "2026-06-15"
-        }
-    ]
+load_dotenv()
+
+API_KEY = os.getenv("FIRMS_API_KEY")
+
+if not API_KEY:
+    raise Exception("FIRMS_API_KEY is not set in environment variables")
+
+# Oregon bounding box
+BOUNDING_BOX = "-124.8,42.0,-116.3,46.3"
+
+URL = f"https://firms.modaps.eosdis.nasa.gov/api/area/csv/{API_KEY}/VIIRS_SNPP_NRT/{BOUNDING_BOX}/2"
 
 
 # ----------------------------
-# GIS CLASSIFICATION LOGIC
+# CLASSIFICATION LOGIC
 # ----------------------------
 def classify_fire(brightness):
     if brightness >= 450:
@@ -40,20 +29,52 @@ def classify_fire(brightness):
 
 
 # ----------------------------
+# FETCH FIRMS DATA (REAL)
+# ----------------------------
+def fetch_firms_data():
+    print("Fetching FIRMS data...")
+
+    response = requests.get(URL)
+
+    if response.status_code != 200:
+        raise Exception(f"FIRMS request failed: {response.status_code}")
+
+    lines = response.text.strip().split("\n")
+    headers = lines[0].split(",")
+
+    data = []
+
+    for line in lines[1:]:
+        values = line.split(",")
+        row = dict(zip(headers, values))
+
+        try:
+            data.append({
+                "lat": float(row["latitude"]),
+                "lon": float(row["longitude"]),
+                "brightness": float(row["bright_ti4"]),
+                "acq_date": row["acq_date"]
+            })
+        except:
+            continue
+
+    print(f"Loaded {len(data)} fire points")
+    return data
+
+
+# ----------------------------
 # CONVERT TO GEOJSON
 # ----------------------------
 def to_geojson(raw_data):
     features = []
 
     for row in raw_data:
-        intensity = classify_fire(row["brightness"])
-
         features.append({
             "type": "Feature",
             "properties": {
                 "brightness": row["brightness"],
                 "date": row["acq_date"],
-                "intensity": intensity
+                "intensity": classify_fire(row["brightness"])
             },
             "geometry": {
                 "type": "Point",
@@ -75,13 +96,17 @@ def save_geojson(data):
         json.dump(data, f)
 
 
+# ----------------------------
+# MAIN
+# ----------------------------
 def main():
-    raw = get_mock_raw_data()
+    raw = fetch_firms_data()
     geojson = to_geojson(raw)
     save_geojson(geojson)
 
-    print("GIS classification pipeline complete ✔")
+    print("Pipeline complete ✔")
 
 
 if __name__ == "__main__":
     main()
+    print("KEY LOADED:", API_KEY is not None)
