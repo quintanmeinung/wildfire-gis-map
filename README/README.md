@@ -13,15 +13,17 @@ NASA FIRMS Satellite Data → Python ETL Pipeline → GeoJSON → Leaflet Web Ma
 It processes near real-time fire detection data and visualizes it on an interactive map with severity classification and proportional symbology.
 
  System Architecture
+
 NASA FIRMS API
-    ↓
+↓
 Python ETL Pipeline (requests + data parsing)
-    ↓
+↓
 Data Cleaning & Classification
-    ↓
+↓
 GeoJSON Output (fires.geojson)
-    ↓
+↓
 Leaflet.js Web Map Visualization
+
  Data Source
 NASA FIRMS (Fire Information for Resource Management System)
 VIIRS satellite fire detection data
@@ -56,29 +58,35 @@ Parse and clean dataset in Python
 Classify fire intensity based on brightness
 Convert data to GeoJSON FeatureCollection
 Render results on interactive Leaflet map
+
  Project Structure
+
 wildfire-map/
-│
-├── index.html
-├── app.js
-├── style.css
-├── pipeline.py
-├── data/
-│   └── fires.geojson
-├── .env
-├── .gitignore
-└── README.md
+* index.html
+* app.js
+* style.css
+* pipeline.py
+* data/
+ * fires.geojson
+* .env
+* .gitignore
+* README.md
 
  How to Run
 1. Install dependencies
+
 pip install requests python-dotenv
+
 2. Set up environment variables
 
 Create a .env file:
 
 FIRMS_API_KEY=your_api_key_here
+
 3. Run the pipeline
+
 python pipeline.py
+
 4. Open the map
 
 Open index.html in a browser.
