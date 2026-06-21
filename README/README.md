@@ -27,7 +27,7 @@ NASA FIRMS (Fire Information for Resource Management System)
 VIIRS satellite fire detection data
 Bounding box-based spatial queries (focused on Oregon region)
  Features
-🗺 GIS Visualization
+ GIS Visualization
 Interactive Leaflet web map
 Fire detection points plotted using latitude/longitude
 Proportional symbol mapping based on fire brightness
@@ -68,6 +68,7 @@ wildfire-map/
 ├── .env
 ├── .gitignore
 └── README.md
+
  How to Run
 1. Install dependencies
 pip install requests python-dotenv
