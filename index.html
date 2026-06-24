@@ -1,36 +1,68 @@
 <!DOCTYPE html>
-<html>
-  <div id="filters" class="info filter-panel">
-  <h4>Filters</h4>
+<html lang="en">
 
-  <label>Severity</label><br>
-    <select id="severityFilter">
-      <option value="all">All</option>
-      <option value="High">High</option>
-      <option value="Medium">Medium</option>
-      <option value="Low">Low</option>
-    </select>
-
-    <br><br>
-
-    <label>Min Brightness</label><br>
-    <input type="range" id="brightnessFilter" min="0" max="500" step="10">
-    <span id="brightnessValue"></span>
-  </div>
 <head>
-  <title>Wildfire GIS Map</title>
-  <meta charset="utf-8" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wildfire GIS Monitoring System</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <link rel="stylesheet" href="style.css" />
+    <!-- Leaflet -->
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <!-- Marker Clustering -->
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <h2>Wildfire GIS Map (Prototype)</h2>
-  <div id="map"></div>
+    <h1>Wildfire GIS Monitoring System</h1>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="app.js"></script>
+    <div id="controls">
+
+        <label>Severity</label><br>
+
+        <select id="severityFilter">
+            <option value="all">All</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+        </select>
+
+        <br><br>
+
+        <label>Min Brightness</label><br>
+
+        <input
+            type="range"
+            id="brightnessFilter"
+            min="0"
+            max="500"
+            value="0"
+            step="10">
+
+        <span id="brightnessValue">0</span>
+
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Leaflet -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- Marker Clustering -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <!-- Application -->
+    <script src="app.js"></script>
+
 </body>
+
 </html>

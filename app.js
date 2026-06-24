@@ -6,6 +6,9 @@ const map = L.map('map').setView([44.0, -120.5], 6);
 // -------------------------
 let rawData;
 let fireLayer;
+let latestDate;
+
+const clusters = L.markerClusterGroup();
 
 // -------------------------
 // Fire Summary Dashboard
@@ -38,45 +41,51 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 // Load GeoJSON
 // -------------------------
 fetch("data/fires.geojson")
-    .then(res => res.json())
-    .then(data => {
+.then(res => res.json())
+.then(data => {
 
-        rawData = data;
+    rawData = data;
+    latestDate = data.features
+        .map(f => f.properties.date)
+        .sort()
+        .reverse()[0];
 
-        // Build brightness array for percentile scaling
-        const brightnessValues = data.features
-            .map(f => f.properties.brightness)
-            .filter(v => v != null)
-            .sort((a, b) => a - b);
+    // Build brightness array for percentile scaling
+    const brightnessValues = data.features
+        .map(f => f.properties.brightness)
+        .filter(v => v != null)
+        .sort((a, b) => a - b);
 
-        // Create layer
-        fireLayer = L.geoJSON(data, {
-            pointToLayer: function (feature, latlng) {
+    // Create layer
+    fireLayer = L.geoJSON(data, {
+        pointToLayer: function (feature, latlng) {
 
-                const brightness = feature.properties.brightness;
-                const percentile = getPercentile(brightness, brightnessValues);
+            const brightness = feature.properties.brightness;
+            const percentile = getPercentile(brightness, brightnessValues);
 
-                return L.circleMarker(latlng, {
-                    radius: 4 + (percentile * 12),
-                    fillColor: getColor(feature.properties.intensity),
-                    color: "#222",
-                    weight: 1,
-                    fillOpacity: 0.85
-                });
-            },
+            return L.circleMarker(latlng, {
+                radius: 4 + (percentile * 12),
+                fillColor: getColor(feature.properties.intensity),
+                color: "#222",
+                weight: 1,
+                fillOpacity: 0.85
+            });
+        },
 
-            onEachFeature: function (feature, layer) {
-                layer.bindPopup(`
-                    <b>Wildfire Detection</b><br>
-                    Date: ${feature.properties.date}<br>
-                    Intensity: ${feature.properties.intensity}<br>
-                    Brightness: ${feature.properties.brightness}
-                `);
-            }
-        }).addTo(map);
-
-        updateFireStats(data);
+        onEachFeature: function (feature, layer) {
+            layer.bindPopup(`
+                <b>Wildfire Detection</b><br>
+                Date: ${feature.properties.date}<br>
+                Intensity: ${feature.properties.intensity}<br>
+                Brightness: ${feature.properties.brightness}
+            `);
+        }
     });
+
+    clusters.addLayer(fireLayer);
+    map.addLayer(clusters);
+    updateFireStats(data);
+});
 
 // -------------------------
 // Percentile functions
@@ -117,7 +126,9 @@ function updateFireStats(data) {
         🟠 Medium: ${medium}<br>
         🟡 Low: ${low}<br>
         <hr>
-        Total: ${data.features.length}
+        Total: ${data.features.length}<br>
+        Latest Detection: ${latestDate}<br>
+        Source: NASA FIRMS VIIRS SNPP NRT
     `;
 }
 
@@ -126,8 +137,11 @@ function updateFireStats(data) {
 // -------------------------
 function applyFilters() {
 
-    const severity = document.getElementById("severityFilter").value;
-    const minBrightness = document.getElementById("brightnessFilter").value;
+    const severity =
+        document.getElementById("severityFilter").value;
+
+    const minBrightness =
+        Number(document.getElementById("brightnessFilter").value);
 
     const filtered = {
         ...rawData,
@@ -145,8 +159,44 @@ function applyFilters() {
         })
     };
 
-    fireLayer.clearLayers();
-    fireLayer.addData(filtered);
+    clusters.clearLayers();
+
+    // Rebuild brightness scale
+    const brightnessValues = filtered.features
+        .map(f => f.properties.brightness)
+        .filter(v => v != null)
+        .sort((a, b) => a - b);
+
+    fireLayer = L.geoJSON(filtered, {
+        pointToLayer: function (feature, latlng) {
+
+            const brightness = feature.properties.brightness;
+            const percentile = getPercentile(
+                brightness,
+                brightnessValues
+            );
+
+            return L.circleMarker(latlng, {
+                radius: 4 + (percentile * 12),
+                fillColor: getColor(feature.properties.intensity),
+                color: "#222",
+                weight: 1,
+                fillOpacity: 0.85
+            });
+        },
+
+        onEachFeature: function (feature, layer) {
+            layer.bindPopup(`
+                <b>Wildfire Detection</b><br>
+                Date: ${feature.properties.date}<br>
+                Intensity: ${feature.properties.intensity}<br>
+                Brightness: ${feature.properties.brightness}
+            `);
+        }
+    });
+
+    clusters.addLayer(fireLayer);
+
     updateFireStats(filtered);
 }
 
