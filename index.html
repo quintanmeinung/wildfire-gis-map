@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
-
+<button onclick="showMarkers()">Markers</button>
+<button onclick="showHeatmap()">Heatmap</button>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -48,7 +49,16 @@
             value="0"
             step="10">
 
-        <span id="brightnessValue">0</span>
+        <span id="brightnessValue">0</span><br>
+
+        <label>Time Range from Current Date</label><br>
+        <input type="range" 
+        id="timeSlider" 
+        min="0"
+        max="2"
+        value="0">
+        
+        <span id="timeLabel">0 days</span>
 
     </div>
 
@@ -62,6 +72,9 @@
 
     <!-- Application -->
     <script src="app.js"></script>
+
+    <!-- Leaftlet Heat Map -->
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 
 </body>
 
