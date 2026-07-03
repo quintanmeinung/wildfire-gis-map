@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
-<button onclick="showMarkers()">Markers</button>
-<button onclick="showHeatmap()">Heatmap</button>
+<button onclick="setLayer('markers')">Heatmap Off</button>
+<button onclick="setLayer('heat')">Heatmap On</button>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -60,6 +60,14 @@
         
         <span id="timeLabel">0 days</span>
 
+    </div>
+
+
+</div>
+
+    <div id="fireInfo" class="info-panel">
+        <h3>Fire Details</h3>
+        <div>Click a fire</div>
     </div>
 
     <div id="map"></div>

@@ -10,11 +10,18 @@ h2 {
   color: white;
 }
 
+/* -------------------- */
+/* MAP CONTAINER */
+/* -------------------- */
 #map {
   height: 90vh;
   width: 100%;
+}
 
-  .legend {
+/* -------------------- */
+/* LEGEND */
+/* -------------------- */
+.legend {
   background: white;
   padding: 10px;
   line-height: 18px;
@@ -28,6 +35,9 @@ h2 {
   margin-right: 6px;
 }
 
+/* -------------------- */
+/* SUMMARY BOX */
+/* -------------------- */
 .summary {
   background: white;
   padding: 10px;
@@ -41,4 +51,14 @@ h2 {
 .summary h4 {
   margin: 0 0 5px 0;
 }
+
+.info-panel {
+  position: absolute;
+  right: 10px;
+  top: 80px;
+  width: 250px;
+  background: white;
+  padding: 10px;
+  z-index: 1000;
+  border-radius: 6px;
 }

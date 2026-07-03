@@ -1,31 +1,42 @@
-// -------------------------
-// Initialize map
-// -------------------------
-const map = L.map('map').setView([44.0, -120.5], 6);
+// =========================
+// MAP INIT
+// =========================
+const map = L.map('map', {
+    center: [44.0, -120.5],
+    zoom: 6,
+    minZoom: 3,
+    maxZoom: 18   // ✅ ADD THIS (important)
+});
 
-// -------------------------
-// Global state
-// -------------------------
+// =========================
+// GLOBAL STATE
+// =========================
 let rawData = null;
 
 let clusters = L.markerClusterGroup();
+map.addLayer(clusters);
+
 let fireLayer = null;
 let heatLayer = null;
 
 let activeLayer = "markers";
-
 let latestDate = null;
 
-// filter state
+let selectedFeatureId = null;
+let fireLayerRef = null;
+
+// =========================
+// FILTERS
+// =========================
 let filters = {
     days: 5,
     severity: "all",
     minBrightness: 0
 };
 
-// -------------------------
-// Fire Summary Dashboard
-// -------------------------
+// =========================
+// SUMMARY UI
+// =========================
 const fireSummary = L.control({ position: "topright" });
 
 fireSummary.onAdd = function () {
@@ -36,30 +47,29 @@ fireSummary.onAdd = function () {
 
 fireSummary.update = function () {
     this._div.innerHTML = `
-        <h4>🔥 Wildfire Summary</h4>
+        <h4>Wildfire Summary</h4>
         <div id="fire-counts">Loading...</div>
     `;
 };
 
 fireSummary.addTo(map);
 
-// -------------------------
-// Basemap
-// -------------------------
+// =========================
+// BASEMAP
+// =========================
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19   // ✅ ADD THIS
 }).addTo(map);
 
-// -------------------------
-// Load data
-// -------------------------
+// =========================
+// LOAD DATA
+// =========================
 fetch("data/fires.geojson")
 .then(res => res.json())
 .then(data => {
-
     rawData = data;
 
-    // normalize timestamps (CRITICAL FIX)
     rawData.features.forEach(f => {
         f.properties.ts = Date.parse(f.properties.date);
     });
@@ -69,12 +79,12 @@ fetch("data/fires.geojson")
     renderMap();
 });
 
-// -------------------------
-// Helpers
-// -------------------------
-function getPercentile(value, sortedArray) {
-    const index = sortedArray.findIndex(v => v >= value);
-    return index === -1 ? 1 : index / sortedArray.length;
+// =========================
+// HELPERS
+// =========================
+function getPercentile(value, arr) {
+    const index = arr.findIndex(v => v >= value);
+    return index === -1 ? 1 : index / arr.length;
 }
 
 function getColor(intensity) {
@@ -82,14 +92,16 @@ function getColor(intensity) {
         case "High": return "#d73027";
         case "Medium": return "#fc8d59";
         case "Low": return "#fee08b";
-        default: return "#cccccc";
+        default: return "#ccc";
     }
 }
 
-// -------------------------
-// Filtering (single source of truth)
-// -------------------------
+// =========================
+// FILTERING
+// =========================
 function getFilteredData() {
+    if (!rawData) return { features: [] };
+
     return {
         ...rawData,
         features: rawData.features.filter(f => {
@@ -112,17 +124,31 @@ function getFilteredData() {
     };
 }
 
-// -------------------------
-// Render pipeline (ONLY renderer)
-// -------------------------
+function setLayer(type) {
+    activeLayer = type;
+    renderMap();
+}
+
+// =========================
+// MAIN RENDER PIPELINE
+// =========================
 function renderMap() {
 
     const data = getFilteredData();
 
+    // clear marker cluster safely
     clusters.clearLayers();
 
-    if (fireLayer) fireLayer.remove();
-    if (heatLayer) map.removeLayer(heatLayer);
+    // remove old layers safely
+    if (fireLayer) {
+        fireLayer.remove();
+        fireLayer = null;
+    }
+
+    if (heatLayer) {
+        map.removeLayer(heatLayer);
+        heatLayer = null;
+    }
 
     if (!data.features.length) return;
 
@@ -132,9 +158,9 @@ function renderMap() {
         .filter(v => v != null)
         .sort((a, b) => a - b);
 
-    // -------------------------
-    // Marker layer
-    // -------------------------
+    // =========================
+    // MARKERS
+    // =========================
     fireLayer = L.geoJSON(data, {
         pointToLayer: (feature, latlng) => {
 
@@ -148,14 +174,20 @@ function renderMap() {
                 weight: 1,
                 fillOpacity: 0.85
             });
-        }
+        },
+
+        onEachFeature: (feature, layer) => {
+    layer.on("click", () => {
+        showFireInfo(feature.properties);
+    });
+}
     });
 
     clusters.addLayer(fireLayer);
 
-    // -------------------------
-    // Heatmap layer
-    // -------------------------
+    // =========================
+    // HEATMAP
+    // =========================
     const heatPoints = data.features.map(f => [
         f.geometry.coordinates[1],
         f.geometry.coordinates[0],
@@ -168,7 +200,7 @@ function renderMap() {
         maxZoom: 10
     });
 
-    // apply active view
+    // apply active layer
     if (activeLayer === "markers") {
         map.addLayer(clusters);
     } else {
@@ -178,9 +210,9 @@ function renderMap() {
     updateFireStats(data);
 }
 
-// -------------------------
-// Stats UI
-// -------------------------
+// =========================
+// STATS
+// =========================
 function updateFireStats(data) {
 
     let high = 0, medium = 0, low = 0;
@@ -200,28 +232,49 @@ function updateFireStats(data) {
         <hr>
         Total: ${data.features.length}<br>
         Latest Detection: ${new Date(latestDate).toISOString().split("T")[0]}<br>
-        Source: NASA FIRMS VIIRS SNPP NRT
+        Source: NASA FIRMS
     `;
 }
 
-// -------------------------
-// Layer switching
-// -------------------------
+// =========================
+// LAYER TOGGLES
+// =========================
 function showHeatmap() {
-    if (map.hasLayer(clusters)) map.removeLayer(clusters);
+    if (!heatLayer) return;
+
+    map.removeLayer(clusters);
     map.addLayer(heatLayer);
     activeLayer = "heat";
 }
 
 function showMarkers() {
-    if (map.hasLayer(heatLayer)) map.removeLayer(heatLayer);
+    if (map.hasLayer(heatLayer)) {
+        map.removeLayer(heatLayer);
+    }
+
     map.addLayer(clusters);
     activeLayer = "markers";
 }
 
-// -------------------------
+// =========================
+// FIRE CLICK POPUP UI
+// =========================
+function showFireInfo(props) {
+    const panel = document.getElementById("fireInfo");
+
+    if (!panel) return;
+
+    panel.innerHTML = `
+        <h4>Fire Details</h4>
+        <b>Intensity:</b> ${props.intensity}<br>
+        <b>Brightness:</b> ${props.brightness}<br>
+        <b>Date:</b> ${props.date}<br>
+    `;
+}
+
+// =========================
 // UI EVENTS
-// -------------------------
+// =========================
 document.getElementById("severityFilter").addEventListener("change", (e) => {
     filters.severity = e.target.value;
     renderMap();
@@ -239,9 +292,9 @@ document.getElementById("timeSlider").addEventListener("input", (e) => {
     renderMap();
 });
 
-// -------------------------
-// Legend
-// -------------------------
+// =========================
+// LEGEND
+// =========================
 const legend = L.control({ position: "bottomright" });
 
 legend.onAdd = function () {
